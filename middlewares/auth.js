@@ -1,3 +1,5 @@
+//Authentication middleware
+
 const jwt = require("jsonwebtoken");
 const { User } = require("../database/schema/Schema.js");
 
