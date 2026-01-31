@@ -1,3 +1,5 @@
+//Blog app backend entry point
+
 const express = require("express");
 const Connection = require("./database/db.js");
 const authRoute = require("./routes/route.js");
