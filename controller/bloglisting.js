@@ -2,50 +2,67 @@ const { Blog, User } = require("../database/schema/Schema");
 
 const blogListing = async (req, res) => {
   try {
-    const { title, content, author, sort, page = 1, limit = 10 } = req.query;
+    const { search, sort, order, page = 1, limit = 10 } = req.query;
 
     const queryObject = {};
 
-    if(title) queryObject.title = { $regex: title, $options: "i" };
+    if(search) {
+      const users = await User.find({
+        name: { $regex: search, $options: "i" }
+      }).select("_id");
+      console.log(users);
 
-    if(content) queryObject.content = { $regex: content, $options: "i" };
+      const userIds = users.map(user => user._id)
 
-    if(author) {
-      const user = await User.findOne({
-        name: { $regex: author, $options: "i" }
-      });
-
-      if(!user) {
-        return res.status(404).json({ message: "Author not found"})
-      }
-
-      queryObject.author = user._id;
+      queryObject.$or = [
+        { title: { $regex: search, $options: "i"} },
+        { author: { $in: userIds} }
+      ]
     }
-    
-    console.log(queryObject);
-    
-    let query = Blog.find(queryObject).populate("author", "name");
-    
-    if(sort) {
-      const sortBy = sort.split(",").join(" ");
-      console.log(sortBy);
-      
-      query = query.sort(sortBy);
-    }
+    // if(title) queryObject.title = { $regex: title, $options: "i" };
 
-    const searchBlog = await query
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .exec();
+    // if(author) {
+    //   const user = await User.findOne({
+    //     name: { $regex: author, $options: "i" }
+    //   });
 
+    //   if(!user) {
+    //     return res.status(404).json({ message: "Author not found"})
+    //   }
+
+    //   queryObject.author = user._id;
+    // }
+    
+    const directionValue = order === "desc" ? -1 : 1;
+    const sortBy = sort === 'name' ? 'author.name' : sort;
+
+    const blogs = await Blog.aggregate([
+      { $match: queryObject },
+      {
+        $lookup: {
+          from: "users",
+          localField: "author",
+          foreignField: "_id",
+          as: "author"
+        }
+      },
+      { $unwind: "$author" },
+      { $sort: { [sortBy]: directionValue } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit * 1 }
+    ]);
+
+    console.log(blogs);
+
+    // const searchBlog = await query
+    //   .exec();
+
+      // console.log(searchBlog);
     const count = await Blog.countDocuments();
 
-    if(!searchBlog) {
-      return res.status(400).json({ message: "Something went wrong"})
-    }
-
     res.json({
-      searchBlog,
+      blogs,
+      // searchBlog,
       totalPages: Math.ceil(count / limit),
       currentPage: page
     })
