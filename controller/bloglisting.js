@@ -2,23 +2,32 @@ const { Blog, User } = require("../database/schema/Schema");
 
 const blogListing = async (req, res) => {
   try {
-    const { search, sort, order, page = 1, limit = 10 } = req.query;
-
-    const queryObject = {};
-
-    if(search) {
-      const users = await User.find({
-        name: { $regex: search, $options: "i" }
-      }).select("_id");
-      console.log(users);
-
-      const userIds = users.map(user => user._id)
-
-      queryObject.$or = [
-        { title: { $regex: search, $options: "i"} },
-        { author: { $in: userIds} }
-      ]
+    const { search, sort, order, page , limit } = req.query;
+    const pageNumber = Number(page) || 1;
+    const limitNumber = Number(limit) || 10;
+    const allowedSortFields = {
+      title: "title",
+      name: "author.name",
+      createdAt: "createdAt"
     }
+    const sortParam = (sort || "").trim();
+
+
+    // const queryObject = {};
+
+    // if(search) {
+    //   const users = await User.find({
+    //     name: { $regex: search, $options: "i" }
+    //   }).select("_id");
+    //   console.log(users);
+
+    //   const userIds = users.map(user => user._id)
+
+    //   queryObject.$or = [
+    //     { title: { $regex: search, $options: "i"} },
+    //     { author: { $in: userIds} }
+    //   ]
+    // }
     // if(title) queryObject.title = { $regex: title, $options: "i" };
 
     // if(author) {
@@ -34,30 +43,34 @@ const blogListing = async (req, res) => {
     // }
     
     const directionValue = order === "desc" ? -1 : 1;
-    const sortBy = sort === 'name' ? 'author.name' : sort;
+    // const sortBy = sort === 'name' ? 'author.name' : sort;
+    const sortBy = allowedSortFields[sortParam];
 
     const blogs = await Blog.aggregate([
-      { $match: queryObject },
+      // { $match: queryObject },
       {
         $lookup: {
           from: "users",
           localField: "author",
           foreignField: "_id",
-          as: "author"
+          as: "author",
         }
       },
       { $unwind: "$author" },
+      { $match: {
+        $or: [
+          { title: { $regex: search, $options: "i" } },
+          { "author.name": { $regex: search, $options: "i" } }
+        ]
+      } },
       { $sort: { [sortBy]: directionValue } },
-      { $skip: (page - 1) * limit },
-      { $limit: limit * 1 }
+      { $skip: (pageNumber - 1) * limitNumber },
+      { $limit: limitNumber },
+      { $project: { _id: 0, title: 1, content: 1, "author.name": 1 } }
     ]);
 
     console.log(blogs);
 
-    // const searchBlog = await query
-    //   .exec();
-
-      // console.log(searchBlog);
     const count = await Blog.countDocuments();
 
     res.json({
