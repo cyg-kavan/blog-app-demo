@@ -66,18 +66,19 @@ const blogListing = async (req, res) => {
       { $sort: { [sortBy]: directionValue } },
       { $skip: (pageNumber - 1) * limitNumber },
       { $limit: limitNumber },
-      { $project: { _id: 0, title: 1, content: 1, "author.name": 1 } }
+      { $project: { "author.email": 0, "author.password": 0, "author.__v": 0, "__v": 0, updatedAt: 0 } }
     ]);
 
-    console.log(blogs);
+    // console.log(blogs);
 
-    const count = await Blog.countDocuments();
+    const count = search ? blogs.length : await Blog.countDocuments();
 
     res.json({
       blogs,
       // searchBlog,
       totalPages: Math.ceil(count / limit),
-      currentPage: page
+      currentPage: page,
+      limit
     })
   } catch (error) {
     console.log(error);
