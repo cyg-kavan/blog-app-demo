@@ -15,6 +15,15 @@ const userSchema = mongoose.Schema({
     required: true,
     minLength: 6,
   },
+  role: {
+    type: String,
+    enum: ['admin','author','viewer'],
+    default: 'viewer'
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  }
 });
 const User = mongoose.model("User", userSchema);
 
@@ -31,6 +40,10 @@ const blogSchema = mongoose.Schema({
   author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
+  },
+  isPublished: {
+    type: Boolean,
+    default: false
   },
   },
   { timestamps: true }
