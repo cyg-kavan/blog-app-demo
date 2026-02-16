@@ -70,7 +70,10 @@ const createUser = async(req, res) => {
 
         console.log("Cookie set successfully");
 
-        res.json(user);
+        return res.status(201).json({
+            message: "Signup Or Registration successful",
+            user
+        });
 
     } catch (error) {
         console.log("Got an error in signup", error);
