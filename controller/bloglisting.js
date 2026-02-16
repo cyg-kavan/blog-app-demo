@@ -57,6 +57,7 @@ const blogListing = async (req, res) => {
         }
       },
       { $unwind: "$author" },
+      { $match: { isPublished: true } },
       { $match: {
         $or: [
           { title: { $regex: search, $options: "i" } },
