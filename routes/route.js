@@ -10,6 +10,9 @@ const updateBlog = require("../controller/updateblog.js");
 const deleteBlog = require("../controller/deleteblog.js");
 const showBlog = require("../controller/showblog.js");
 const blogListing = require("../controller/bloglisting.js");
+const changeRole = require("../controller/changeUserRole.js");
+const authorizeRoles = require("../middlewares/rbac.js");
+const publishBlog = require("../controller/publishBlog.js");
 
 const router = express.Router();
 
@@ -58,11 +61,13 @@ router.get("/blogs/:blogId", async (req, res) => {
 router.post("/signup", createUser);
 router.post("/login", login);
 router.patch("/update-profile", authentication, updateProfile);
-router.post("/create-blog", authentication, createBlog);
-router.patch("/update-blog/:blogId", authentication, updateBlog);
-router.delete("/delete-blog/:blogId", authentication, deleteBlog);
+router.post("/create-blog", authentication, authorizeRoles(['admin', 'author']), createBlog);
+router.patch("/update-blog/:blogId", authentication, authorizeRoles(['admin', 'author']), updateBlog);
+router.delete("/delete-blog/:blogId", authentication, authorizeRoles(['admin', 'author']), deleteBlog);
 router.get("/show-blog", authentication, showBlog);
 router.get("/blog-listing", blogListing);
+router.patch("/admin/users/:userId/role", authentication, authorizeRoles('admin'), changeRole);
+router.patch("/admin/blogs/:blogId/publish", authentication, authorizeRoles('admin'), publishBlog);
 
 // router.get("/logout", (req, res) => {
 //     res.clearCookie("token");
