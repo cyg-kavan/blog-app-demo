@@ -61,13 +61,16 @@ router.get("/blogs/:blogId", async (req, res) => {
 router.post("/signup", createUser);
 router.post("/login", login);
 router.patch("/update-profile", authentication, updateProfile);
-router.post("/create-blog", authentication, authorizeRoles(['admin', 'author']), createBlog);
-router.patch("/update-blog/:blogId", authentication, authorizeRoles(['admin', 'author']), updateBlog);
-router.delete("/delete-blog/:blogId", authentication, authorizeRoles(['admin', 'author']), deleteBlog);
+// router.post("/create-blog", authentication, authorizeRoles(['admin', 'author']), createBlog);
+router.post("/create-blog", authentication, authorizeRoles('blog', 'add'), createBlog);
+// router.patch("/update-blog/:blogId", authentication, authorizeRoles(['admin', 'author']), updateBlog);
+router.patch("/update-blog/:blogId", authentication, authorizeRoles('blog', 'edit'), updateBlog);
+// router.delete("/delete-blog/:blogId", authentication, authorizeRoles(['admin', 'author']), deleteBlog);
+router.delete("/delete-blog/:blogId", authentication, authorizeRoles('blog', 'delete'), deleteBlog);
 router.get("/show-blog", authentication, showBlog);
 router.get("/blog-listing", blogListing);
-router.patch("/admin/users/:userId/role", authentication, authorizeRoles('admin'), changeRole);
-router.patch("/admin/blogs/:blogId/publish", authentication, authorizeRoles('admin'), publishBlog);
+router.patch("/admin/users/:userId/role", authentication, authorizeRoles('user', 'edit'), changeRole);
+router.patch("/admin/blogs/:blogId/publish", authentication, authorizeRoles('blog', 'publish'), publishBlog);
 
 // router.get("/logout", (req, res) => {
 //     res.clearCookie("token");
