@@ -1,9 +1,0 @@
-{
-    "admin": {
-        "blog": ["add", "edit", "delete", "view", "publish"],
-        "user": ["edit"]
-    },
-    "author": {
-        "blog": ["add", "edit", "delete", "view"]
-    }
-}
