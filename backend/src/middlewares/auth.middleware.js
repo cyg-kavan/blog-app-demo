@@ -1,7 +1,7 @@
 //Authentication middleware
 
 const jwt = require("jsonwebtoken");
-const { User } = require("../database/schema/Schema.js");
+const User = require("../models/user.model");
 
 require("dotenv").config();
 
@@ -24,14 +24,17 @@ const authentication = async (req, res, next) => {
         }
 
         const decoded = jwt.verify(token, process.env.TOKEN_KEY);
-        req.user = decoded; //we are getting data in req object
-        console.log("Decoded user", decoded);
-        console.log("User ID from token:", req.user.id);
+        // req.user = decoded; //we are getting data in req object
+        // console.log("Decoded user", decoded);
+        // console.log("User ID from token:", req.user.id);
 
-        const user = await User.findById(decoded.id);
+        const user = await User.findById(decoded.id).select('-password');
         if(!user) {
             return res.status(404).send({ message: "User doesn't exist"});
         }
+        // console.log(user);
+        
+        req.user = user;
         next();
     } catch (error) {
         console.log(error);
