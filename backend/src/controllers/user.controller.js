@@ -211,4 +211,22 @@ const checkAuth = async (req, res) => {
     }
 }
 
-module.exports = { signup, login, updateProfile, checkAuth };
+const logout = async (req, res) => {
+    try {
+        res.clearCookie("token", {
+            path:"/",
+            // expires: new Date(Date.now() + 86400000),
+            httpOnly: true,
+        })
+
+        res.status(200).json({
+            message: "Logged out successfully"
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: "Internal Server Error"
+        })
+    }
+}
+
+module.exports = { signup, login, updateProfile, checkAuth, logout };

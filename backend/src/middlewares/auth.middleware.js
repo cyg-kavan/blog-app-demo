@@ -7,7 +7,7 @@ require("dotenv").config();
 
 const authentication = async (req, res, next) => {
     const token = req.cookies?.token;
-    console.log("Token from cookie:", token);
+    // console.log("Token from cookie:", token);
 
     // const authHeader = req.headers.authorization;
     // console.log("Authorization header:", authHeader);

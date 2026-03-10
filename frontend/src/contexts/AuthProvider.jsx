@@ -34,8 +34,18 @@ export default function AuthProvider({ children }) {
     //     setUser(response.data.user)
     // }
 
+    const logout = async () => {
+        try {
+            await axios.post("http://localhost:8000/api/users/logout", {}, { withCredentials: true });
+
+            setUser(null);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
     return (
-        <AuthContext.Provider value={{ user, loading, checkAuthentication }}>
+        <AuthContext.Provider value={{ user, loading, checkAuthentication, logout }}>
             {children}
         </AuthContext.Provider>
     )
