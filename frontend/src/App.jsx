@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Navbar from './components/Navbar'
+import BlogCard from './components/BlogCard'
 
 export default function App () {
   return (
@@ -21,6 +22,7 @@ export default function App () {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Home />}></Route>
             <Route path="/home" element={<Home />}></Route>
+            <Route path="/blog-card" element={<BlogCard />}></Route>
           </Route>
         </Routes>
       </BrowserRouter>
