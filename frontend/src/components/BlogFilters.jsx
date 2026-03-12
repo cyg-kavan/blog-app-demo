@@ -16,9 +16,12 @@ export default function BlogFilters({ search, sort, setSearch, setSort }) {
         value={sort}
         onChange={(e) => setSort(e.target.value)}>
             <option value="">Sort By</option>
-            <option value="title">Title</option>
-            <option value="name">Author Name</option>
-            <option value="createdAt">Date</option>
+            <option value="title-asc">Title(A-Z)</option>
+            <option value="title-desc">Title(Z-A)</option>
+            <option value="name-asc">Author Name(A-Z)</option>
+            <option value="name-desc">Author Name(Z-A)</option>
+            <option value="createdAt-asc">Oldest</option>
+            <option value="createdAt-desc">Newest</option>
         </select>
     </div>
   );

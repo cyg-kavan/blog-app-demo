@@ -10,9 +10,11 @@ export default function Home() {
 
   useEffect(() => {
     const fetchBlogs = async () => {
+      const [sortby, order] = sort.split("-")
+      // console.log(sortby,order);
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/blogs?search=${search}&sort=${sort}&order=&page=1&limit=10`
+          `http://localhost:8000/api/blogs?search=${search.trim()}&sort=${sortby}&order=${order}&page=1&limit=10`
         );
         console.log(response.data.blogs);
         setBlogs(response.data.blogs);
