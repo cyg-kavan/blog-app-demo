@@ -5,5 +5,5 @@ import { Navigate, Outlet } from "react-router-dom";
 export default function PublicRoute() {
   const { user } = useAuth();
 
-  return user ? <Navigate to="/home" /> : <Outlet />;
+  return user ? <Navigate to="/my-blogs" /> : <Outlet />;
 }

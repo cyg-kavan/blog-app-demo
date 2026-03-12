@@ -1,6 +1,9 @@
 import React from 'react'
+import { useAuth } from '../contexts/useAuth';
 
 export default function BlogCard({ title, author, createdAt }) {
+
+  const { user } = useAuth();
   
   const dateObj = new Date(createdAt);
   const customFormattedDate = dateObj.toLocaleDateString("en-US", {
@@ -15,7 +18,9 @@ export default function BlogCard({ title, author, createdAt }) {
 
         <h2 className='pt-1.5 font-bold text-lg truncate'>{title}</h2>
         <div className='flex justify-between text-sm mt-2 mb-8'>
+          {!user &&
             <span>{author.name}</span>
+          }
             <span>{customFormattedDate}</span>
         </div>
         

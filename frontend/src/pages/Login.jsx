@@ -30,7 +30,7 @@ export default function Login () {
       await checkAuthentication();
 
       alert("Login successful")
-      navigate("/home")
+      navigate("/my-blogs")
     } catch (error) {
       console.error("Login error", error.message);
     }

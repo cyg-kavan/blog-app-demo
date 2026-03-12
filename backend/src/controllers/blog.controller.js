@@ -116,7 +116,7 @@ const showBlog = async (req, res) => {
 
     const showblogs = await Blog.find(
       { author: userId },
-      { _id: 0, title: 1, content: 1 }
+      { title: 1, content: 1, createdAt: 1 }
     );
     console.log(showblogs);
 
