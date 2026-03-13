@@ -10,14 +10,12 @@ export default function Navbar() {
     <nav className="bg-white shadow-sm">
       <div className="flex items-center justify-between h-16 mx-4 px-4">
         {/* Logo */}
-        <Link to="/" className="text-3xl font-bold">Logo</Link>
+        <Link to="/" className="text-3xl font-bold">
+          Logo
+        </Link>
 
         {/* Desktop Navbar View */}
         <div className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="hover:text-gray-600 text-lg px-2">
-            Profile
-          </Link>
-
           {!user ? (
             <>
               <Link
@@ -34,13 +32,18 @@ export default function Navbar() {
               </Link>
             </>
           ) : (
-            <Link
-              to="/"
-              className="bg-black hover:bg-gray-900 rounded-md px-4 py-2 text-white text-lg"
-              onClick={logout}
-            >
-              Logout
-            </Link>
+            <>
+              <Link to="/" className="hover:text-gray-600 text-lg px-2">
+                Profile
+              </Link>
+              <Link
+                to="/"
+                className="bg-black hover:bg-gray-900 rounded-md px-4 py-2 text-white text-lg"
+                onClick={logout}
+              >
+                Logout
+              </Link>
+            </>
           )}
         </div>
 
@@ -63,14 +66,14 @@ export default function Navbar() {
 
           {!user ? (
             <Link
-              to="/home"
+              to="/login"
               className="bg-black hover:bg-gray-900 rounded-md ml-3 px-4 py-1 text-white text-lg"
             >
               Login
             </Link>
           ) : (
             <Link
-              to="/home"
+              to="/"
               className="bg-black hover:bg-gray-900 rounded-md ml-3 px-4 py-1 text-white text-lg"
               onClick={logout}
             >

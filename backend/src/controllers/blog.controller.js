@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const Blog = require("../models/blog.model");
 
 const createBlog = async (req, res) => {
@@ -136,6 +137,8 @@ const showBlog = async (req, res) => {
 
 const blogListing = async (req, res) => {
   try {
+    const userId = req.user?.id;
+    console.log(userId)
     const { search, sort, order, page, limit } = req.query;
     const pageNumber = Number(page) || 1;
     const limitNumber = Number(limit) || 10;
@@ -179,7 +182,7 @@ const blogListing = async (req, res) => {
     // const sortBy = sort === 'name' ? 'author.name' : sort;
     const sortBy = allowedSortFields[sortParam];
 
-    const blogs = await Blog.aggregate([
+    const pipeline = [
       // { $match: queryObject },
       {
         $lookup: {
@@ -190,7 +193,17 @@ const blogListing = async (req, res) => {
         },
       },
       { $unwind: "$author" },
+      // { $match: { "author._id": userId }},
       { $match: { isPublished: true } },
+    ]
+
+    if(userId) {
+      pipeline.push({
+        $match: { "author._id": new mongoose.Types.ObjectId(userId) },
+      })
+    }
+
+    pipeline.push(
       {
         $match: {
           $or: [
@@ -211,7 +224,8 @@ const blogListing = async (req, res) => {
           updatedAt: 0,
         },
       },
-    ]);
+    )
+    const blogs = await Blog.aggregate(pipeline);
 
     // console.log(blogs);
 

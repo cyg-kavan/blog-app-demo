@@ -15,8 +15,8 @@ export default function App () {
       <BrowserRouter>
       <Navbar />
         <Routes>
-          <Route element={<PublicRoute />}>
             <Route path="/" element={<Home />}></Route>
+          <Route element={<PublicRoute />}>
             <Route path="/signup" element={<Signup />}></Route>
             <Route path="/login" element={<Login />}></Route>
           </Route>

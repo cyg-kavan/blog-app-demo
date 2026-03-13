@@ -12,7 +12,7 @@ export default function AuthProvider({ children }) {
                 const response = await axios.get("http://localhost:8000/api/users/check-auth", { withCredentials: true });
                 setUser(response.data.user);
             } catch (error) {
-                console.error("Authentication error", error.response?.data || error.message);
+                // console.error("Authentication error", error.response?.data || error.message);
                 setUser(null);
             } finally {
                 setLoading(false);

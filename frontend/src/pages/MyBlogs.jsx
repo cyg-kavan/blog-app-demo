@@ -1,28 +1,40 @@
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import BlogListGrid from "../components/BlogListGrid";
+import BlogFilters from "../components/BlogFilters";
 
 export default function MyBlogs() {
   const [blogs, setBlogs] = useState([]);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("");
 
   useEffect(() => {
     const fetchBlogs = async () => {
+      const [sortby, order] = sort.split("-")
+      // console.log(sortby,order);
       try {
         const response = await axios.get(
-          "http://localhost:8000/api/blogs/show-blog",
-          { withCredentials: true }
+          `http://localhost:8000/api/blogs/my-blogs?search=${search.trim()}&sort=${sortby}&order=${order}&page=1&limit=10`,
+          { withCredentials: true  }
         );
-        console.log(response.data.showblogs);
-        setBlogs(response.data.showblogs);
+        console.log(response.data.blogs);
+        setBlogs(response.data.blogs);
       } catch (error) {
         console.error(error);
       }
     };
 
     fetchBlogs();
-  }, []);
+  }, [search, sort]);
   return (
     <>
+      <BlogFilters 
+        search={search}
+        setSearch={setSearch}
+        sort={sort}
+        setSort={setSort}
+      />
+      
       <BlogListGrid blogs={blogs} />
     </>
   );

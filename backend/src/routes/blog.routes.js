@@ -6,7 +6,7 @@ const authentication = require("../middlewares/auth.middleware");
 const authorizeRoles = require("../middlewares/rbac.middleware");
 
 router.get("/", blogListing);
-router.get("/show-blog", authentication, showBlog);
+router.get("/my-blogs", authentication, blogListing);
 // router.post("/create-blog", authentication, authorizeRoles(['admin', 'author']), createBlog);
 router.post("/", authentication, authorizeRoles('blog', 'add'), createBlog);
 // router.patch("/update-blog/:blogId", authentication, authorizeRoles(['admin', 'author']), updateBlog);
