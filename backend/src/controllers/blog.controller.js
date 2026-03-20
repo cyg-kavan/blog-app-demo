@@ -35,6 +35,25 @@ const createBlog = async (req, res) => {
   }
 };
 
+const getBlogById = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const blogId = req.params.blogId;
+    
+    const fetchBlog = await Blog.findOne({ _id: blogId, author: userId });
+    
+    if (!fetchBlog) {
+      return res.status(400).send({ message: "Blog not found" })
+    }
+
+    return res.status(200).json({
+      fetchBlog
+    })
+  } catch (error) {
+    return res.status(500).send({ message: "Internal Server Error" })
+  }
+}
+
 const updateBlog = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -138,8 +157,7 @@ const showBlog = async (req, res) => {
 const blogListing = async (req, res) => {
   try {
     const userId = req.user?.id;
-    console.log(userId)
-    const { search, sort, order, page, limit } = req.query;
+    const { search, sort, order, page, limit, status } = req.query;
     const pageNumber = Number(page) || 1;
     const limitNumber = Number(limit) || 10;
     const allowedSortFields = {
@@ -193,14 +211,22 @@ const blogListing = async (req, res) => {
         },
       },
       { $unwind: "$author" },
-      // { $match: { "author._id": userId }},
-      { $match: { isPublished: true } },
+      // { $match: { isPublished: true } },
     ]
 
+    
     if(userId) {
       pipeline.push({
         $match: { "author._id": new mongoose.Types.ObjectId(userId) },
       })
+
+      if(status === "published") {
+        pipeline.push({ $match: { isPublished: true } });
+      } else if(status === "unpublished") {
+        pipeline.push({ $match: { isPublished: false } });
+      }
+    } else {
+      pipeline.push({ $match: { isPublished: true }});
     }
 
     pipeline.push(
@@ -233,7 +259,6 @@ const blogListing = async (req, res) => {
 
     res.json({
       blogs,
-      // searchBlog,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
       limit,
@@ -244,4 +269,4 @@ const blogListing = async (req, res) => {
   }
 };
 
-module.exports = { createBlog, updateBlog, deleteBlog, showBlog, blogListing };
+module.exports = { createBlog, updateBlog, deleteBlog, showBlog, blogListing, getBlogById };
