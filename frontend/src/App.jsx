@@ -8,6 +8,9 @@ import PublicRoute from './components/PublicRoute'
 import Navbar from './components/Navbar'
 import BlogCard from './components/BlogCard'
 import MyBlogs from './pages/MyBlogs'
+import CreateBlog from './pages/CreateBlog'
+import UpdateBlog from './pages/UpdateBlog'
+import ProfilePage from './pages/ProfilePage'
 
 export default function App () {
   return (
@@ -23,6 +26,9 @@ export default function App () {
 
           <Route element={<ProtectedRoute />}>
             <Route path="/my-blogs" element={<MyBlogs />}></Route>
+            <Route path="/create-blog" element={<CreateBlog />}></Route>
+            <Route path="/update-blog/:blogId" element={<UpdateBlog />}></Route>
+            <Route path="/profile" element={<ProfilePage />}></Route>
             <Route path="/blog-card" element={<BlogCard />}></Route>
           </Route>
         </Routes>
