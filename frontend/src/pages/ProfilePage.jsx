@@ -7,6 +7,10 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [requests, setRequests] = useState([]);
+  const [myRequests, setMyRequests] = useState([]);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -26,6 +30,57 @@ export default function ProfilePage() {
       alert("Profile updated successfully");
     } catch (error) {
       console.log("Error while updating profile: ", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchAllUsersRequests = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8000/api/admin/requests",
+          { withCredentials: true }
+        );
+
+        setRequests(response.data.requests);
+      } catch (error) {
+        console.log("Error when fetching all users requests: ", error);
+      }
+    };
+
+    if (user.role === "admin") {
+      fetchAllUsersRequests();
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchMyRequests = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8000/api/users/my-requests",
+          { withCredentials: true }
+        );
+        setMyRequests(response.data.requests);
+      } catch (error) {
+        console.log("Error when fetching my requests: ", error);
+      }
+    };
+
+    if (user.role !== "admin") {
+      fetchMyRequests();
+    }
+  }, []);
+
+  const approveRequest = async (requestId, status) => {
+    try {
+      await axios.patch(
+        `http://localhost:8000/api/admin/requests/${requestId}`,
+        { status },
+        { withCredentials: true }
+      );
+      setRequests(prev => prev.map(r => r._id === requestId ? {...r, status} : r))
+      alert("Request resolved successfully");
+    } catch (error) {
+      console.log("Error while resolving request: ", error);
     }
   };
 
@@ -121,6 +176,132 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
+
+      {requests.length !== 0 || myRequests.length !== 0 ? (
+        <div className="pt-20 w-350 min-h-screen px-10 py-10">
+          <div className="p-3">
+            <div className="overflow-hidden rounded-md">
+              <table className="table-auto md:table-fixed w-full">
+                <thead className="bg-black text-white shadow-lg border-b-2 border-gray-100">
+                  <tr>
+                    {user.role === "admin" && (
+                      <>
+                        <th className="p-3">Username</th>
+                        <th className="p-3">E-mail</th>
+                      </>
+                    )}
+                    <th className="p-3">Request Type</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3">Blog Title</th>
+                    {user.role === "admin" && <th className="p-3">Actions</th>}
+                  </tr>
+                </thead>
+                <tbody className="bg-gray-50 text-center">
+                  {requests.map((request) => (
+                    <tr key={request._id}>
+                      <td className="p-3">{request.user_id.name}</td>
+                      <td className="p-3">{request.user_id.email}</td>
+                      <td className="p-3">{request.request_type}</td>
+                      <td className="p-3">
+                        <button
+                          className={`shadow-lg text-sm rounded-2xl py-1 w-30 ${
+                            request.status === "Pending"
+                              ? "bg-amber-200"
+                              : request.status === "Approved"
+                              ? "bg-green-500"
+                              : "bg-red-500"
+                          }`}
+                        >
+                          {request.status}
+                        </button>
+                      </td>
+                      <td className="p-3 truncate">
+                        <button
+                          onClick={() => {
+                            setSelectedRequest(request);
+                            setIsDetailModalOpen(true);
+                          }}
+                          className="font-medium hover:text-blue-700 hover:underline cursor-pointer"
+                        >
+                          {request.blog_id?.title || "-"}
+                        </button>
+                      </td>
+
+                      {user.role === "admin" && (
+                        <td className="p-3">
+                          <div className="flex justify-center gap-2">
+                            <button
+                              disabled={request.status !== "Pending"}
+                              onClick={() =>
+                                approveRequest(request._id, "Approved")
+                              }
+                              className="bg-green-600 text-white text-sm font-semibold p-2 rounded-md cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              disabled={request.status !== "Pending"}
+                              onClick={() =>
+                                approveRequest(request._id, "Cancelled")
+                              }
+                              className="bg-red-600 text-white text-sm font-semibold p-2 rounded-md cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+
+                  {myRequests.map((myrequest) => (
+                    <tr key={myrequest._id}>
+                      <td className="p-3">{myrequest.request_type}</td>
+                      <td className="p-3">
+                        <button
+                          className={`shadow-lg text-sm rounded-2xl py-1 w-30 ${
+                            myrequest.status === "Pending"
+                              ? "bg-amber-200"
+                              : myrequest.status === "Approved"
+                              ? "bg-green-500"
+                              : "bg-red-500"
+                          }`}
+                        >
+                          {myrequest.status}
+                        </button>
+                      </td>
+                      <td className="p-3 truncate">
+                        {myrequest.blog_id?.title || "-"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {isDetailModalOpen && (
+                <Modal onClose={() => setIsDetailModalOpen(false)}>
+                  <div className="p-3">
+                    <h1 className="text-xl font-bold mb-5">
+                      {selectedRequest.blog_id?.title}
+                    </h1>
+                    <div className="flex justify-between font-semibold mb-5">
+                      <span>{selectedRequest.user_id.name}</span>
+                      {/* <span>{customFormattedDate}</span> */}
+                    </div>
+                    <p className="text-md whitespace-pre-line">
+                      {selectedRequest.blog_id?.content}
+                    </p>
+                  </div>
+                </Modal>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex justify-center items-center text-4xl font-semibold w-350 min-h-screen">
+          There are no requests
+        </div>
+      )}
     </div>
   );
 }

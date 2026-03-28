@@ -1,15 +1,25 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/useAuth";
+// import { useState } from "react";
 
 export default function BlogFilters({
   search,
   sort,
   setSearch,
   setSort,
+  status,
   setStatus,
 }) {
   const { user } = useAuth();
   const location = useLocation();
+
+  // const [activeButton, setActiveButton] = useState("all")
+  const buttons = [
+    {label: "All", value: "all"},
+    {label: "Published", value: "published"},
+    {label: "Unpublished", value: "unpublished"},
+  ]
+  
   return (
     <div className="flex justify-between items-center mt-30 px-24">
       <div>
@@ -27,29 +37,55 @@ export default function BlogFilters({
           <>
             {location.pathname === "/my-blogs" && (
               <>
-                <Link
-                  to="/"
-                  onClick={() => setStatus("unpublished")}
-                  className="bg-black hover:bg-gray-900 px-4 py-2 rounded-md text-white font-semibold"
+                <div
+                  className="inline-flex bg-gray-100 rounded-md shadow-lg hover:shadow-gray-300 p-1"
+                  role="group"
                 >
-                  All Blogs
-                </Link>
-                <Link
-                  to="/my-blogs"
-                  onClick={() => setStatus("unpublished")}
-                  className="bg-black hover:bg-gray-900 px-4 py-2 rounded-md text-white font-semibold"
-                >
-                  Unpublished Blogs
-                </Link>
+                  {/* <button
+                    onClick={() => setStatus("all")}
+                    className="bg-white hover:font-semibold focus:ring-2 focus:ring-gray-200 rounded-l-md px-3 py-2 focus:outline-none"
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setStatus("published")}
+                    className="bg-white hover:font-semibold focus:ring-2 focus:ring-gray-200 px-3 py-2 focus:outline-none"
+                  >
+                    Published
+                  </button>
+                  <button
+                    onClick={() => setStatus("unpublished")}
+                    className="bg-white hover:font-semibold focus:ring-2 focus:ring-gray-200 rounded-r-md px-3 py-2 focus:outline-none"
+                  >
+                    Unpublished
+                  </button> */}
+
+                  {buttons.map((button) => (
+                    <button
+                      key={button.value}
+                      onClick={() => {setStatus(button.value)}}
+                      className={`px-3 py-1 focus:outline-none cursor-pointer ${
+                        status === button.value
+                          ? "bg-black text-white hover:font-semibold focus:ring-2 focus:ring-gray-200 rounded-md font-semibold"
+                          : "bg-white focus:ring-2 focus:ring-gray-200"
+                        }`}
+                    >
+                      {button.label}
+                    </button>
+                  )
+                  )}
+                </div>
               </>
             )}
-            <Link
-              to="/my-blogs"
-              onClick={() => setStatus("published")}
-              className="bg-black hover:bg-gray-900 px-4 py-2 rounded-md text-white font-semibold"
-            >
-              My Blogs
-            </Link>
+
+            {location.pathname === "/" && (
+              <Link
+                to="/my-blogs"
+                className="bg-black hover:bg-gray-900 px-4 py-2 rounded-md text-white font-semibold"
+              >
+                My Blogs
+              </Link>
+            )}
 
             {user.role !== "viewer" && (
               <Link

@@ -4,7 +4,8 @@ import BlogCard from "./BlogCard";
 export default function BlogListGrid({
   blogs,
   handleDeleteBlog,
-  handlePublishBlog,
+  handlePublishBlogRequest,
+  handlePublishBlog
 }) {
   return (
     // <div className='bg-gray-300 max-w-[180vh] mx-30 rounded-2xl p-10 mt-20'>
@@ -14,6 +15,7 @@ export default function BlogListGrid({
           key={blog._id}
           {...blog}
           handleDeleteBlog={handleDeleteBlog}
+          handlePublishBlogRequest={handlePublishBlogRequest}
           handlePublishBlog={handlePublishBlog}
         />
       ))}

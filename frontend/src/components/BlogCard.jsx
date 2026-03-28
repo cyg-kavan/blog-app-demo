@@ -11,7 +11,8 @@ export default function BlogCard({
   _id,
   handleDeleteBlog,
   isPublished,
-  handlePublishBlog,
+  handlePublishBlogRequest,
+  handlePublishBlog
 }) {
   const { user } = useAuth();
   const location = useLocation();
@@ -82,9 +83,14 @@ export default function BlogCard({
             </>
           )}
         </div>
-        {!isPublished && (
-          <button onClick={() => handlePublishBlog(_id)} className="bg-black hover:bg-gray-900 text-white font-semibold w-full py-1 rounded-md cursor-pointer">
+        {!isPublished && user.role !== "admin" && (
+          <button onClick={() => handlePublishBlogRequest(_id)} className="bg-black hover:bg-gray-900 text-white font-semibold w-full py-1 rounded-md cursor-pointer">
             Publish Request
+          </button>
+        )}
+        {(!isPublished && user.role === "admin") && (
+          <button onClick={() => handlePublishBlog(_id, true)} className="bg-black hover:bg-gray-900 text-white font-semibold w-full py-1 rounded-md cursor-pointer">
+            Publish Blog
           </button>
         )}
       </div>

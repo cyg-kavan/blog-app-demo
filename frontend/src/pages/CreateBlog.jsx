@@ -12,16 +12,16 @@ export default function CreateBlog() {
     e.preventDefault();
 
     try {
-      await axios.post(
+      const response = await axios.post(
         "http://localhost:8000/api/blogs",
         { title, content },
         { withCredentials: true }
       );
-
+      console.log("Create---", response.data)
       alert("Blog Created successfully");
       navigate("/my-blogs");
     } catch (error) {
-      console.error("Create blog error", error.message);
+      console.log("Create blog error: ", error.response?.data);
     }
   };
 

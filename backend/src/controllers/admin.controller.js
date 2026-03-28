@@ -1,4 +1,5 @@
 const Blog = require("../models/blog.model");
+const Request = require("../models/request.model");
 const User = require("../models/user.model");
 const mongoose = require("mongoose");
 
@@ -43,7 +44,7 @@ const changeRole = async (req, res) => {
     if (!updatedRole) {
       return res
         .status(404)
-        .send({ message: " User doesn't exist Or Error in updating role" });
+        .send({ message: "User doesn't exist Or Error in updating role" });
     }
 
     return res.status(200).json({
@@ -74,11 +75,9 @@ const publishBlog = async (req, res) => {
     );
 
     if (!updatedPublishStatus) {
-      return res
-        .status(404)
-        .send({
-          message: "Blog doesn't exist Or Error in updating publish status",
-        });
+      return res.status(404).send({
+        message: "Blog doesn't exist Or Error in updating publish status",
+      });
     }
 
     return res.json({
@@ -91,4 +90,80 @@ const publishBlog = async (req, res) => {
   }
 };
 
-module.exports = { changeRole, publishBlog };
+const getUsersRequest = async (req, res) => {
+  try {
+    const requests = await Request.find()
+      .populate("user_id", "name email")
+      .populate("blog_id", "title content");
+
+    return res.status(200).json({
+      requests,
+      message: "All user's requests are fetched",
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const approveRequest = async (req, res) => {
+  const requestId = req.params.requestId;
+  const { status } = req.body;
+  try {
+    const request = await Request.findById(requestId);
+
+    if (!request) {
+      return res.status(404).json({ message: "Request doesn't exist" });
+    }
+
+    if (!["Approved", "Cancelled"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    if (request.status !== "Pending") {
+      return res
+        .status(400)
+        .json({ message: "This request is already approved or cancelled" });
+    }
+
+    if (status === "Approved") {
+      if (request.request_type === "Publish Blog") {
+        const blog = await Blog.findById(request.blog_id);
+
+        if (!blog) {
+          return res.status(404).json({ message: "Blog not found" });
+        }
+
+        await Blog.findByIdAndUpdate(
+          request.blog_id,
+          { isPublished: true },
+          { new: true, runValidators: true }
+        );
+      }
+
+      if (request.request_type === "Change Role") {
+        await User.findByIdAndUpdate(
+          request.user_id,
+          { role: "author" },
+          { new: true, runValidators: true }
+        );
+      }
+
+      request.status = "Approved";
+      await request.save();
+    }
+
+    if (status === "Cancelled") {
+      request.status = "Cancelled";
+      await request.save();
+    }
+
+    return res.status(200).json({
+      request,
+      message: "Request resolved successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+module.exports = { changeRole, publishBlog, getUsersRequest, approveRequest };

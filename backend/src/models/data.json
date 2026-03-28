@@ -1,9 +1,14 @@
 {
     "admin": {
         "blog": ["add", "edit", "delete", "view", "publish"],
-        "user": ["edit"]
+        "user": ["edit"],
+        "request": ["publish_request","view_all", "approve"]
     },
     "author": {
-        "blog": ["add", "edit", "delete", "view"]
+        "blog": ["add", "edit", "delete", "view"],
+        "request": ["publish_request","view_own"]
+    },
+    "viewer": {
+        "request": ["role_request","view_own"]
     }
 }

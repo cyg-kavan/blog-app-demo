@@ -1,3 +1,4 @@
+const { default: mongoose } = require("mongoose");
 const Blog = require("../models/blog.model");
 const Request = require("../models/request.model");
 const User = require("../models/user.model");
@@ -269,32 +270,33 @@ const sendRequest = async (req, res) => {
       }
     }
 
-    const duplicateRequestQuery = {
+    const query = {
         user_id: userId,
         request_type,
         status: "Pending",
+        blog_id: blogId || null
     }
     
-    if(request_type === "Publish Blog") {
-        duplicateRequestQuery.blog_id = blogId;
-    }
+    // if(request_type === "Publish Blog") {
+    //     duplicateRequestQuery.blog_id = blogId;
+    // }
 
-    const duplicateRequest = await Request.findOne(duplicateRequestQuery);
+    const duplicateRequest = await Request.findOne(query);
 
     if (duplicateRequest) {
       return res.status(409).json({ message: "Request already exist" });
     }
 
-    const requestData = {
-      user_id: userId,
-      request_type,
-    };
+    // const requestData = {
+    //   user_id: userId,
+    //   request_type,
+    // };
 
-    if (request_type === "Publish Blog") {
-      requestData.blog_id = blogId;
-    }
+    // if (request_type === "Publish Blog") {
+    //   requestData.blog_id = blogId;
+    // }
 
-    const createRequest = await Request.create(requestData);
+    const createRequest = await Request.create(query);
 
     if (createRequest) {
       return res.status(201).json({
@@ -307,4 +309,17 @@ const sendRequest = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, updateProfile, checkAuth, logout, sendRequest };
+const getMyRequests = async (req, res) => {
+  const userId = req.user.id;
+
+  const requests = await Request.find({ user_id: userId })
+    .populate("user_id", "name email")
+    .populate("blog_id", "title")
+
+  return res.status(200).json({
+    requests,
+    message: "Your requests have been fetched"
+  })
+}
+
+module.exports = { signup, login, updateProfile, checkAuth, logout, sendRequest, getMyRequests };

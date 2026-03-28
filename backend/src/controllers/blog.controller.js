@@ -15,7 +15,8 @@ const createBlog = async (req, res) => {
       author: userId,
     });
     if (existingBlogTitle) {
-      return res.status(409).send({
+      return res.status(409).json({
+        success: false,
         message: "Blog title already exist, Please choose another title",
       });
     }
@@ -160,6 +161,7 @@ const blogListing = async (req, res) => {
     const { search, sort, order, page, limit, status } = req.query;
     const pageNumber = Number(page) || 1;
     const limitNumber = Number(limit) || 10;
+    // const isPublished = !status || status === 'published'
     const allowedSortFields = {
       title: "title",
       name: "author.name",
@@ -211,25 +213,18 @@ const blogListing = async (req, res) => {
         },
       },
       { $unwind: "$author" },
-      // { $match: { isPublished: true } },
+      // { $match: { isPublished } },
     ]
 
-    
-    if(userId) {
-      pipeline.push({
-        $match: { "author._id": new mongoose.Types.ObjectId(userId) },
-      })
-
-      if(status === "published") {
-        pipeline.push({ $match: { isPublished: true } });
-      } else if(status === "unpublished") {
-        pipeline.push({ $match: { isPublished: false } });
-      }
-    } else {
-      pipeline.push({ $match: { isPublished: true }});
+    const matchStage = {
+      ...(status === "published" && { isPublished: true }),
+      ...(status === "unpublished" && { isPublished: false }),
+      ...(userId && { "author._id": new mongoose.Types.ObjectId(userId) }),
+      ...(!userId && { isPublished: true }),
     }
 
     pipeline.push(
+      { $match: matchStage },
       {
         $match: {
           $or: [
@@ -250,8 +245,21 @@ const blogListing = async (req, res) => {
           updatedAt: 0,
         },
       },
-    )
+    );
     const blogs = await Blog.aggregate(pipeline);
+    
+    // if(userId) {
+    //   pipeline.push({
+    //     $match: { "author._id": new mongoose.Types.ObjectId(userId) },
+    //   })
+
+      // if(status === "published") {
+      //   pipeline.push({ $match: { isPublished: true } });
+      // } else if(status === "unpublished") {
+      //   pipeline.push({ $match: { isPublished: false } });
+      // }
+    // }
+
 
     // console.log(blogs);
 

@@ -8,7 +8,7 @@ export default function MyBlogs() {
   const [blogs, setBlogs] = useState([]);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("");
-  const [status, setStatus] = useState("published");
+  const [status, setStatus] = useState("all");
 
   const { user } = useAuth();
 
@@ -45,7 +45,7 @@ export default function MyBlogs() {
     }
   };
 
-  const handleChangeRole = async () => {
+  const handleChangeRoleRequest = async () => {
     try {
       await axios.post(
         "http://localhost:8000/api/users/request",
@@ -58,7 +58,7 @@ export default function MyBlogs() {
     }
   };
 
-  const handlePublishBlog = async (blogId) => {
+  const handlePublishBlogRequest = async (blogId) => {
     try {
       await axios.post(
         "http://localhost:8000/api/users/request",
@@ -74,6 +74,20 @@ export default function MyBlogs() {
     }
   };
 
+  const handlePublishBlog = async (blogId, isPublished) => {
+    try {
+      await axios.patch(
+        `http://localhost:8000/api/admin/blogs/${blogId}/publish`,
+        { isPublished },
+        { withCredentials: true }
+      );
+      setBlogs((prev) => prev.map(b => b._id === blogId ? {...b, isPublished} : b))
+      alert("Blog published successfully");
+    } catch (error) {
+      console.error("Publish Blog Error: ", error);
+    }
+  };
+
   return (
     <>
       {user.role !== "viewer" ? (
@@ -83,12 +97,14 @@ export default function MyBlogs() {
             setSearch={setSearch}
             sort={sort}
             setSort={setSort}
+            status={status}
             setStatus={setStatus}
           />
 
           <BlogListGrid
             blogs={blogs}
             handleDeleteBlog={handleDeleteBlog}
+            handlePublishBlogRequest={handlePublishBlogRequest}
             handlePublishBlog={handlePublishBlog}
           />
         </>
@@ -103,7 +119,7 @@ export default function MyBlogs() {
             </h2>
             <div>
               <button
-                onClick={handleChangeRole}
+                onClick={handleChangeRoleRequest}
                 className="bg-black hover:bg-gray-900 text-white text-lg rounded-md font-semibold w-full py-1 cursor-pointer"
               >
                 Change Role
