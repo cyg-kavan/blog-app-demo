@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import BlogForm from "../components/BlogForm";
+import toast from "react-hot-toast";
 
 export default function UpdateBlog() {
   const [title, setTitle] = useState("");
@@ -17,8 +18,8 @@ export default function UpdateBlog() {
           { withCredentials: true }
         );
 
-        setTitle(response.data.fetchBlog.title);
-        setContent(response.data.fetchBlog.content);
+        setTitle(response.data.data.title);
+        setContent(response.data.data.content);
       } catch (error) {
         console.error("Update blog error", error.message);
       }
@@ -31,16 +32,17 @@ export default function UpdateBlog() {
     e.preventDefault();
 
     try {
-      await axios.patch(
+      const response = await axios.patch(
         `http://localhost:8000/api/blogs/${blogId}`,
         { title, content },
         { withCredentials: true }
       );
 
-      alert("Blog Updated successfully");
+      toast.success(response.data.message, { duration: 3000 });
       navigate("/my-blogs");
     } catch (error) {
-      console.error("Create blog error", error.message);
+      console.error("Update blog error", error.response?.data?.message);
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
 

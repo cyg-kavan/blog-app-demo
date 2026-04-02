@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/useAuth";
 import axios from "axios";
 import Modal from "../components/Modal";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 export default function ProfilePage() {
   const [name, setName] = useState("");
@@ -11,7 +13,9 @@ export default function ProfilePage() {
   const [myRequests, setMyRequests] = useState([]);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
-  const { user } = useAuth();
+  const { user, setUser } = useAuth();
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfileDetails = async () => {
@@ -20,16 +24,26 @@ export default function ProfilePage() {
     fetchProfileDetails();
   }, []);
 
-  const updateProfile = async () => {
+  const updateProfile = async (e) => {
+    e.preventDefault();
+
     try {
-      await axios.patch(
+      const response = await axios.patch(
         "http://localhost:8000/api/users/profile",
         { name, password },
         { withCredentials: true }
       );
-      alert("Profile updated successfully");
+      setIsModalOpen(false);
+      setUser((prev) => ({ ...prev, name: response.data.data.name }));
+      toast.success(response.data.message, { duration: 3000 });
     } catch (error) {
-      console.log("Error while updating profile: ", error);
+      console.log(
+        "Error while updating profile: ",
+        error.response?.data?.message
+      );
+      toast.error(error.response?.data?.message || "Something went wrong", {
+        duration: 6000,
+      });
     }
   };
 
@@ -37,13 +51,15 @@ export default function ProfilePage() {
     const fetchAllUsersRequests = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8000/api/admin/requests",
+          "http://localhost:8000/api/request/requests",
           { withCredentials: true }
         );
-
-        setRequests(response.data.requests);
+        setRequests(response.data.data);
       } catch (error) {
-        console.log("Error when fetching all users requests: ", error);
+        console.log(
+          "Error when fetching all users requests: ",
+          error.response?.data?.message || error.message
+        );
       }
     };
 
@@ -56,12 +72,15 @@ export default function ProfilePage() {
     const fetchMyRequests = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:8000/api/users/my-requests",
+          "http://localhost:8000/api/request/my-requests",
           { withCredentials: true }
         );
-        setMyRequests(response.data.requests);
+        setMyRequests(response.data.data);
       } catch (error) {
-        console.log("Error when fetching my requests: ", error);
+        console.log(
+          "Error when fetching my requests: ",
+          error.response?.data?.message || error.message
+        );
       }
     };
 
@@ -72,15 +91,23 @@ export default function ProfilePage() {
 
   const approveRequest = async (requestId, status) => {
     try {
-      await axios.patch(
-        `http://localhost:8000/api/admin/requests/${requestId}`,
+      const response = await axios.patch(
+        `http://localhost:8000/api/request/requests/${requestId}`,
         { status },
         { withCredentials: true }
       );
-      setRequests(prev => prev.map(r => r._id === requestId ? {...r, status} : r))
-      alert("Request resolved successfully");
+      setRequests((prev) =>
+        prev.map((r) => (r._id === requestId ? { ...r, status } : r))
+      );
+      toast.success(response.data.message || "Request resolved successfully");
     } catch (error) {
-      console.log("Error while resolving request: ", error);
+      console.log(
+        "Error while resolving request: ",
+        error.response?.data?.message
+      );
+      toast.error(error.response?.data?.message || "Something went wrong", {
+        duration: 6000,
+      });
     }
   };
 
@@ -128,7 +155,12 @@ export default function ProfilePage() {
             <Modal onClose={() => setIsModalOpen(false)}>
               <div className="p-3">
                 <h1 className="text-lg font-bold mb-5">Edit Your Profile</h1>
-                <form onSubmit={updateProfile} className="space-y-6">
+                <form
+                  onSubmit={(e) => {
+                    updateProfile(e);
+                  }}
+                  className="space-y-6"
+                >
                   <div>
                     <label className="block text-sm/6 font-medium text-black-100">
                       Name
@@ -179,7 +211,13 @@ export default function ProfilePage() {
 
       {requests.length !== 0 || myRequests.length !== 0 ? (
         <div className="pt-20 w-350 min-h-screen px-10 py-10">
-          <div className="p-3">
+          <div className="flex flex-col gap-2 p-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="bg-black hover:bg-gray-900 text-white text-md font-semibold p-2 w-30 rounded-md cursor-pointer"
+            >
+              Back
+            </button>
             <div className="overflow-hidden rounded-md">
               <table className="table-auto md:table-fixed w-full">
                 <thead className="bg-black text-white shadow-lg border-b-2 border-gray-100">
@@ -199,8 +237,8 @@ export default function ProfilePage() {
                 <tbody className="bg-gray-50 text-center">
                   {requests.map((request) => (
                     <tr key={request._id}>
-                      <td className="p-3">{request.user_id.name}</td>
-                      <td className="p-3">{request.user_id.email}</td>
+                      <td className="p-3">{request.user_id?.name}</td>
+                      <td className="p-3">{request.user_id?.email}</td>
                       <td className="p-3">{request.request_type}</td>
                       <td className="p-3">
                         <button
@@ -235,7 +273,7 @@ export default function ProfilePage() {
                               onClick={() =>
                                 approveRequest(request._id, "Approved")
                               }
-                              className="bg-green-600 text-white text-sm font-semibold p-2 rounded-md cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                              className="bg-green-600 text-white text-sm font-semibold p-2 rounded-md cursor-pointer disabled:opacity-20 disabled:pointer-events-none"
                             >
                               Approve
                             </button>
@@ -244,7 +282,7 @@ export default function ProfilePage() {
                               onClick={() =>
                                 approveRequest(request._id, "Cancelled")
                               }
-                              className="bg-red-600 text-white text-sm font-semibold p-2 rounded-md cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                              className="bg-red-600 text-white text-sm font-semibold p-2 rounded-md cursor-pointer disabled:opacity-20 disabled:pointer-events-none"
                             >
                               Cancel
                             </button>

@@ -1,6 +1,3 @@
-const { default: mongoose } = require("mongoose");
-const Blog = require("../models/blog.model");
-const Request = require("../models/request.model");
 const User = require("../models/user.model");
 
 const { createSecretToken } = require("../utils/generateToken");
@@ -15,11 +12,14 @@ const signup = async (req, res) => {
     //     req.body.password
     // ))
     // {
-    //     return res.status(400).send("All inputs are required");
+    //     return res.status(400).json("All inputs are required");
     // }
 
     if (!(name && email && password)) {
-      return res.status(400).send("All inputs are required");
+      return res.status(400).json({
+        success: false,
+        message: "All inputs are required",
+      });
     }
 
     const isEmail = (email) => {
@@ -27,7 +27,10 @@ const signup = async (req, res) => {
       return emailFormat.test(email);
     };
     if (!isEmail(email)) {
-      return res.status(400).send({ message: "Invalid email format." });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format.",
+      });
     }
 
     const isStrongPassword = (password) => {
@@ -45,18 +48,20 @@ const signup = async (req, res) => {
       );
     };
     if (!isStrongPassword(password)) {
-      return res.status(400).send({
+      return res.status(400).json({
+        success: false,
         message:
-          "Password must contain atleast 6 characters contain at least one digit, one uppercase letter, one lowercase letter, and one special character.",
+          "Password must contain atleast 6 characters, one digit, one uppercase letter, one lowercase letter, and one special character.",
       });
     }
 
     const existingUser = await User.findOne({ email: email });
 
     if (existingUser) {
-      return res
-        .status(409)
-        .send({ message: "User already exist, Please Login." });
+      return res.status(409).json({
+        success: false,
+        message: "User Or E-mail already exist, Please Login.",
+      });
     }
 
     const salt = 10;
@@ -80,12 +85,16 @@ const signup = async (req, res) => {
     console.log("Cookie set successfully");
 
     return res.status(201).json({
+      success: true,
       message: "Signup Or Registration successful",
-      user,
+      data: user,
     });
   } catch (error) {
     console.log("Got an error in signup", error);
-    res.status(500).send("Internal Server Error");
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -93,12 +102,18 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!(email && password)) {
-      return res.status(400).json({ message: "All input is required" });
+      return res.status(400).json({
+        success: false,
+        message: "All input is required",
+      });
     }
 
     const user = await User.findOne({ email });
     if (!(user && (await bcrypt.compare(password, user.password)))) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid credentials",
+      });
     }
 
     const token = createSecretToken(user._id);
@@ -109,10 +124,17 @@ const login = async (req, res) => {
       httpOnly: true,
     });
 
-    res.json({ token });
+    return res.status(200).json({
+      success: true,
+      message: "Logged in successfully",
+      token,
+    });
   } catch (error) {
     console.log("Got an error in login", error);
-    res.status(500).send("Internal Server Error");
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -127,7 +149,7 @@ const updateProfile = async (req, res) => {
 
     // if(password) {
     //     if(password.length < 6) {
-    //         return res.status(400).send({ message: "Password must be atleast 6 characters long"});
+    //         return res.status(400).json({ message: "Password must be atleast 6 characters long"});
     //     }
 
     //     const salt = 10;
@@ -150,9 +172,10 @@ const updateProfile = async (req, res) => {
         );
       };
       if (!isStrongPassword(password)) {
-        return res.status(400).send({
+        return res.status(400).json({
+          success: false,
           message:
-            "Password must contain atleast 6 characters contain at least one digit, one uppercase letter, one lowercase letter, and one special character.",
+            "Password must contain atleast 6 characters, one digit, one uppercase letter, one lowercase letter, and one special character.",
         });
       }
 
@@ -170,12 +193,16 @@ const updateProfile = async (req, res) => {
     });
 
     if (!updatedUser) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
 
     res.json({
+      success: true,
       message: "Profile updated successfully",
-      user: updatedUser,
+      data: updatedUser,
     });
 
     //findbyId and then save
@@ -191,7 +218,7 @@ const updateProfile = async (req, res) => {
 
     // if(password) {
     //     if(password.length < 6) {
-    //         return res.status(400).send({ message: "Password must be atleast 6 characters long"});
+    //         return res.status(400).json({ message: "Password must be atleast 6 characters long"});
     //     }
 
     //     const salt = 10;
@@ -206,7 +233,10 @@ const updateProfile = async (req, res) => {
     // });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -229,97 +259,22 @@ const logout = async (req, res) => {
       httpOnly: true,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
+      success: true,
       message: "Logged out successfully",
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       message: "Internal Server Error",
     });
   }
 };
 
-const sendRequest = async (req, res) => {
-  const userId = req.user.id;
-//   const blogId = req.params.blogId;
-  const { request_type, blogId } = req.body;
-
-  try {
-    if (!request_type) {
-      return res.status(400).json({ message: "Request type is required" });
-    }
-
-    // if (!(request_type === "Change Role" || request_type === "Publish Blog")) {
-    //   return res.status(400).json({ message: "Request type is not valid" });
-    // }
-
-    const validRequest = ["Change Role", "Publish Blog"];
-    if (!validRequest.includes(request_type)) {
-      return res.status(400).json({ message: "Request type is not valid" });
-    }
-
-    if (request_type === "Publish Blog") {
-      if (!blogId) {
-        return res.status(400).json({ message: "Blog Id is required" });
-      }
-
-      const verifyAuthor = await Blog.findOne({ _id: blogId, author: userId });
-
-      if (!verifyAuthor) {
-        return res.status(400).json({ message: "Blog not found or unauthorized" });
-      }
-    }
-
-    const query = {
-        user_id: userId,
-        request_type,
-        status: "Pending",
-        blog_id: blogId || null
-    }
-    
-    // if(request_type === "Publish Blog") {
-    //     duplicateRequestQuery.blog_id = blogId;
-    // }
-
-    const duplicateRequest = await Request.findOne(query);
-
-    if (duplicateRequest) {
-      return res.status(409).json({ message: "Request already exist" });
-    }
-
-    // const requestData = {
-    //   user_id: userId,
-    //   request_type,
-    // };
-
-    // if (request_type === "Publish Blog") {
-    //   requestData.blog_id = blogId;
-    // }
-
-    const createRequest = await Request.create(query);
-
-    if (createRequest) {
-      return res.status(201).json({
-        request: createRequest,
-        message: "Request sent successfully",
-      });
-    }
-  } catch (error) {
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
+module.exports = {
+  signup,
+  login,
+  updateProfile,
+  checkAuth,
+  logout,
 };
-
-const getMyRequests = async (req, res) => {
-  const userId = req.user.id;
-
-  const requests = await Request.find({ user_id: userId })
-    .populate("user_id", "name email")
-    .populate("blog_id", "title")
-
-  return res.status(200).json({
-    requests,
-    message: "Your requests have been fetched"
-  })
-}
-
-module.exports = { signup, login, updateProfile, checkAuth, logout, sendRequest, getMyRequests };

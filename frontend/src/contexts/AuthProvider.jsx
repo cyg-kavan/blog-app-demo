@@ -1,6 +1,7 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react'
 import { AuthContext } from './AuthContext';
+import toast from 'react-hot-toast';
 
 export default function AuthProvider({ children }) {
 
@@ -36,16 +37,18 @@ export default function AuthProvider({ children }) {
 
     const logout = async () => {
         try {
-            await axios.post("http://localhost:8000/api/users/logout", {}, { withCredentials: true });
+            const response = await axios.post("http://localhost:8000/api/users/logout", {}, { withCredentials: true });
 
             setUser(null);
+            toast.success(response.data.message);
         } catch (error) {
             console.error(error);
+            toast.error(error.response?.data?.message || "Something went wrong", { duration: 3000 });
         }
     }
 
     return (
-        <AuthContext.Provider value={{ user, loading, checkAuthentication, logout }}>
+        <AuthContext.Provider value={{ user, setUser, loading, checkAuthentication, logout }}>
             {children}
         </AuthContext.Provider>
     )

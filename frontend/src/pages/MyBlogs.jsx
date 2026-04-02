@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import BlogListGrid from "../components/BlogListGrid";
 import BlogFilters from "../components/BlogFilters";
 import { useAuth } from "../contexts/useAuth";
+import toast from "react-hot-toast";
 
 export default function MyBlogs() {
   const [blogs, setBlogs] = useState([]);
@@ -21,8 +22,8 @@ export default function MyBlogs() {
           `http://localhost:8000/api/blogs/my-blogs?search=${search.trim()}&sort=${sortby}&order=${order}&page=1&limit=10&status=${status}`,
           { withCredentials: true }
         );
-        console.log(response.data.blogs);
-        setBlogs(response.data.blogs);
+        console.log(response.data.data);
+        setBlogs(response.data.data);
       } catch (error) {
         console.error(error);
       }
@@ -35,56 +36,60 @@ export default function MyBlogs() {
 
   const handleDeleteBlog = async (id) => {
     try {
-      await axios.delete(`http://localhost:8000/api/blogs/${id}`, {
+      const response = await axios.delete(`http://localhost:8000/api/blogs/${id}`, {
         withCredentials: true,
       });
-      alert("Blog Deleted Successfully");
+      toast.success(response.data.message, { duration: 3000 });
       setBlogs((prev) => prev.filter((blog) => blog._id !== id));
     } catch (error) {
-      console.error("Delete error", error);
+      console.error("Delete error", error.response?.data?.message);
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
 
   const handleChangeRoleRequest = async () => {
     try {
-      await axios.post(
-        "http://localhost:8000/api/users/request",
+      const response = await axios.post(
+        "http://localhost:8000/api/request/request",
         { request_type: "Change Role" },
         { withCredentials: true }
       );
-      alert("Role change request submitted successfully");
+      toast.success(response.data.message || "Role change request submitted successfully");
     } catch (error) {
-      console.error("Change Role Error: ", error);
+      console.error("Change Role Error: ", error.response?.data?.message || error.message);
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
 
   const handlePublishBlogRequest = async (blogId) => {
     try {
-      await axios.post(
-        "http://localhost:8000/api/users/request",
+      const response = await axios.post(
+        "http://localhost:8000/api/request/request",
         {
           request_type: "Publish Blog",
           blogId: blogId,
         },
         { withCredentials: true }
       );
-      alert("Publish Blog request submitted successfully");
+      toast.success(response.data.message || "Publish Blog request submitted successfully");
     } catch (error) {
-      console.error("Publish Blog Error: ", error);
+      console.error("Publish Blog Error: ", error.response?.data?.message);
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
 
   const handlePublishBlog = async (blogId, isPublished) => {
     try {
-      await axios.patch(
+      const response = await axios.patch(
         `http://localhost:8000/api/admin/blogs/${blogId}/publish`,
         { isPublished },
         { withCredentials: true }
       );
       setBlogs((prev) => prev.map(b => b._id === blogId ? {...b, isPublished} : b))
-      alert("Blog published successfully");
+      toast.success(response?.data?.message ||"Blog published successfully");
     } catch (error) {
-      console.error("Publish Blog Error: ", error);
+      console.error("Publish Blog Error: ", error.response?.data?.message);
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   };
 

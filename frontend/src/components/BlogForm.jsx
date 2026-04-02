@@ -54,8 +54,8 @@ export default function BlogForm({
             {buttonText}
           </button>
           <button
-            onClick={() => navigate(-1)}
-            type="submit"
+            onClick={() => navigate("/my-blogs")}
+            type="button"
             className="bg-black text-white font-semibold px-6 py-2 rounded-md hover:bg-gray-900 cursor-pointer"
           >
             Cancel

@@ -7,13 +7,17 @@ const createBlog = async (req, res) => {
     const { title, content } = req.body;
 
     if (!(title && content)) {
-      return res.status(400).send({ message: "All inputs are required" });
+      return res.status(400).json({
+        success: false,
+        message: "All inputs are required",
+      });
     }
 
     const existingBlogTitle = await Blog.findOne({
       title: title,
       author: userId,
     });
+
     if (existingBlogTitle) {
       return res.status(409).json({
         success: false,
@@ -29,10 +33,16 @@ const createBlog = async (req, res) => {
 
     const blog = await newBlog.save();
 
-    res.json(blog);
+    return res.status(201).json({
+      success: true,
+      message: "Blog created successfully",
+      data: blog,
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -40,20 +50,28 @@ const getBlogById = async (req, res) => {
   try {
     const userId = req.user.id;
     const blogId = req.params.blogId;
-    
+
     const fetchBlog = await Blog.findOne({ _id: blogId, author: userId });
-    
+
     if (!fetchBlog) {
-      return res.status(400).send({ message: "Blog not found" })
+      return res.status(400).json({
+        success: false,
+        message: "Blog not found",
+      });
     }
 
     return res.status(200).json({
-      fetchBlog
-    })
+      success: true,
+      message: "Blog fetched successfully",
+      data: fetchBlog,
+    });
   } catch (error) {
-    return res.status(500).send({ message: "Internal Server Error" })
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
-}
+};
 
 const updateBlog = async (req, res) => {
   try {
@@ -66,7 +84,10 @@ const updateBlog = async (req, res) => {
     const getblog = await Blog.findOne({ _id: blogId, author: userId });
 
     if (!getblog) {
-      return res.status(400).send({ message: "Blog not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
     }
 
     if (title) {
@@ -76,7 +97,8 @@ const updateBlog = async (req, res) => {
         _id: { $ne: blogId },
       });
       if (existingBlogTitle) {
-        return res.status(409).send({
+        return res.status(409).json({
+          success: false,
           message: "Blog title already exist, Please choose another title",
         });
       }
@@ -86,15 +108,19 @@ const updateBlog = async (req, res) => {
 
     if (content) getblog.content = content;
 
-    await getblog.save();
+    const updatedBlog = await getblog.save();
 
-    res.json({
+    return res.status(200).json({
+      success: true,
       message: "Blog updated successfully",
-      //   updatedBlog,
+      data: updatedBlog,
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ message: "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -104,12 +130,13 @@ const deleteBlog = async (req, res) => {
     const blogId = req.params.blogId;
     console.log(req.params);
 
-    // const { title, content } = req.body;
-
     const getblog = await Blog.findOne({ _id: blogId, author: userId });
 
     if (!getblog) {
-      return res.status(400).send({ message: "Blog not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Blog not found",
+      });
     }
 
     const deletedBlog = await getblog.deleteOne();
@@ -118,16 +145,23 @@ const deleteBlog = async (req, res) => {
     // const deletedBlog = await Blog.findOneAndDelete({ _id: blogId });
 
     if (!deletedBlog) {
-      return res.status(400).send({ message: "Blog not deleted" });
+      return res.status(400).json({
+        success: false,
+        message: "Blog not deleted",
+      });
     }
 
-    res.json({
+    return res.status(200).json({
+      success: true,
       message: "Blog deleted successfully",
-      deletedBlog,
+      data: deletedBlog,
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ message: "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -139,19 +173,22 @@ const showBlog = async (req, res) => {
       { author: userId },
       { title: 1, content: 1, createdAt: 1 }
     );
-    console.log(showblogs);
 
     // if(showblogs.length === 0) {
-    //     return res.status(400).send({ message: "You Haven't Posted Any Blog Yet" });
+    //     return res.status(400).json({ message: "You Haven't Posted Any Blog Yet" });
     // }
 
-    res.json({
+    return res.json({
+      success: true,
       message: "Blogs fetched successfully",
-      showblogs,
+      data: showblogs,
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ message: "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -214,14 +251,14 @@ const blogListing = async (req, res) => {
       },
       { $unwind: "$author" },
       // { $match: { isPublished } },
-    ]
+    ];
 
     const matchStage = {
       ...(status === "published" && { isPublished: true }),
       ...(status === "unpublished" && { isPublished: false }),
       ...(userId && { "author._id": new mongoose.Types.ObjectId(userId) }),
       ...(!userId && { isPublished: true }),
-    }
+    };
 
     pipeline.push(
       { $match: matchStage },
@@ -244,37 +281,48 @@ const blogListing = async (req, res) => {
           __v: 0,
           updatedAt: 0,
         },
-      },
+      }
     );
     const blogs = await Blog.aggregate(pipeline);
-    
+
     // if(userId) {
     //   pipeline.push({
     //     $match: { "author._id": new mongoose.Types.ObjectId(userId) },
     //   })
 
-      // if(status === "published") {
-      //   pipeline.push({ $match: { isPublished: true } });
-      // } else if(status === "unpublished") {
-      //   pipeline.push({ $match: { isPublished: false } });
-      // }
+    // if(status === "published") {
+    //   pipeline.push({ $match: { isPublished: true } });
+    // } else if(status === "unpublished") {
+    //   pipeline.push({ $match: { isPublished: false } });
     // }
-
+    // }
 
     // console.log(blogs);
 
     const count = search ? blogs.length : await Blog.countDocuments();
 
-    res.json({
-      blogs,
+    return res.json({
+      success: true,
+      message: "Blogs fetched successfully",
+      data: blogs,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
       limit,
     });
   } catch (error) {
     console.log(error);
-    return res.status(500).send({ message: "Internal Server Error" });
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
 
-module.exports = { createBlog, updateBlog, deleteBlog, showBlog, blogListing, getBlogById };
+module.exports = {
+  createBlog,
+  updateBlog,
+  deleteBlog,
+  showBlog,
+  blogListing,
+  getBlogById,
+};
